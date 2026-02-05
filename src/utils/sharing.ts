@@ -1,11 +1,11 @@
-import type { Dungeon, DelveRating } from '../types';
+import type { Dungeon, GunudRating } from '../types';
 
 export interface ShareResult {
   text: string;
   emojiGrid: string;
 }
 
-export function getDelveRating(moves: number, par: number): DelveRating {
+export function getGunudRating(moves: number, par: number): GunudRating {
   const diff = moves - par;
   if (diff < 0) return { grade: 'S', name: 'Silent Steps', emoji: '\u2728' };
   if (diff === 0) return { grade: 'A', name: 'Swift Delve', emoji: '\u26A1' };
@@ -24,17 +24,17 @@ export function generateShareText(
   clueCount?: number
 ): ShareResult {
   const emojiGrid = generateEmojiGrid(dungeon, visitedRoomIds);
-  const rating = getDelveRating(moves, par);
+  const rating = getGunudRating(moves, par);
   const clues = clueCount ?? visitedRoomIds.size;
 
-  const text = `Delve #${puzzleNumber}
+  const text = `Gunud #${puzzleNumber}
 
 ${emojiGrid}
 
 Rating: ${rating.grade} - ${rating.name} ${rating.emoji}
 ${moves} moves (Par: ${par}) | Clues: ${clues}
 
-playdelve.game`;
+gunud.vercel.app`;
 
   return { text, emojiGrid };
 }

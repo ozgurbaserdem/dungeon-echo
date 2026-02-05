@@ -19,10 +19,10 @@ export function Game() {
 
   // Show how to play on first visit
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('delve-tutorial-seen');
+    const hasSeenTutorial = localStorage.getItem('gunud-tutorial-seen');
     if (!hasSeenTutorial) {
       setShowHowToPlay(true);
-      localStorage.setItem('delve-tutorial-seen', 'true');
+      localStorage.setItem('gunud-tutorial-seen', 'true');
     }
   }, []);
 
@@ -54,7 +54,7 @@ export function Game() {
         </button>
 
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#ffd700]">⛏️ Delve</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#ffd700]">⛏️ Gunud</h1>
           <p className="text-xs text-[#a0a0b0]">Puzzle #{puzzleNumber}</p>
         </div>
 

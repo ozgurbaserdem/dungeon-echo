@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Dungeon } from '../types';
-import { generateShareText, copyToClipboard, getDelveRating } from '../utils/sharing';
+import { generateShareText, copyToClipboard, getGunudRating } from '../utils/sharing';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export function ShareModal({
 }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
 
-  const rating = getDelveRating(moves, par);
+  const rating = getGunudRating(moves, par);
   const confettiConfig = CONFETTI_CONFIG[rating.grade];
 
   // Manage confetti phase with a single state driven by CSS animation timing

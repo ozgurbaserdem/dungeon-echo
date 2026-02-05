@@ -79,7 +79,13 @@ export function roomMatchesClue(
   switch (clue.category) {
     case 'connection': {
       const n = parseInt(clue.compact);
-      return candidate.connections.length === n;
+      const distFromCandidate = calculateDistances(rooms, candidate.id);
+      const clueRoomDist = distFromCandidate.get(clueRoom.id) || 0;
+      const closerExits = clueRoom.connections.filter(connId => {
+        const connDist = distFromCandidate.get(connId);
+        return connDist !== undefined && connDist < clueRoomDist;
+      }).length;
+      return closerExits === n;
     }
     case 'spatial': {
       const dx = candidate.x - clueRoom.x;
@@ -116,11 +122,15 @@ function buildClue(
 ): Clue {
   switch (category) {
     case 'connection': {
-      const n = treasureRoom.connections.length;
+      const roomDist = distFromTreasure.get(room.id) || 0;
+      const n = room.connections.filter(connId => {
+        const connDist = distFromTreasure.get(connId);
+        return connDist !== undefined && connDist < roomDist;
+      }).length;
       return {
         category: 'connection',
-        text: `The treasure room has ${n} exit${n !== 1 ? 's' : ''}`,
-        compact: `${n} exit${n !== 1 ? 's' : ''}`,
+        text: `${n} of your exits lead${n === 1 ? 's' : ''} toward the relic`,
+        compact: `${n} path${n !== 1 ? 's' : ''} closer`,
         icon: '\u{1F517}',
       };
     }

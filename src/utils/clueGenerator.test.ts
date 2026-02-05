@@ -38,12 +38,18 @@ describe('generateClues', () => {
     }
   });
 
-  it('connection clues match treasure room exit count', () => {
-    const treasure = dungeon.rooms.find(r => r.id === dungeon.treasureId)!;
-    for (const clue of clues.values()) {
-      if (clue.category === 'connection') {
-        expect(clue.text).toContain(`${treasure.connections.length} exit`);
-      }
+  it('connection clues report paths closer to relic', () => {
+    const distFromTreasure = calculateDistances(dungeon.rooms, dungeon.treasureId);
+    for (const [roomId, clue] of clues) {
+      if (clue.category !== 'connection') continue;
+      const room = dungeon.rooms.find(r => r.id === roomId)!;
+      const roomDist = distFromTreasure.get(room.id) || 0;
+      const expectedCloser = room.connections.filter(connId => {
+        const connDist = distFromTreasure.get(connId);
+        return connDist !== undefined && connDist < roomDist;
+      }).length;
+      expect(clue.text).toContain(`${expectedCloser} of your exits`);
+      expect(clue.compact).toContain(`${expectedCloser} path`);
     }
   });
 
