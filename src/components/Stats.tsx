@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Stats as StatsType } from '../types';
 
 interface StatsProps {
@@ -18,6 +19,13 @@ const GRADE_COLORS: Record<string, string> = {
 const GRADES = ['S', 'A', 'B', 'C', 'D'] as const;
 
 export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const ratingCounts = stats.ratingCounts || { S: 0, A: 0, B: 0, C: 0, D: 0 };
@@ -25,8 +33,8 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
   const hasAnyRatings = GRADES.some((g) => (ratingCounts[g] || 0) > 0);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-sm w-full pixel-border">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-sm w-full pixel-border" onClick={e => e.stopPropagation()}>
         <h2 className="text-2xl font-bold text-[#ffd700] mb-6 text-center">Statistics</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-6">

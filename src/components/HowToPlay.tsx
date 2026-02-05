@@ -1,14 +1,23 @@
+import { useEffect } from 'react';
+
 interface HowToPlayProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-md w-full pixel-border">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-md w-full pixel-border" onClick={e => e.stopPropagation()}>
         <h2 className="text-2xl font-bold text-[#ffd700] mb-4 text-center">How to Play</h2>
 
         <div className="space-y-4 text-[#e8e8f0]">
