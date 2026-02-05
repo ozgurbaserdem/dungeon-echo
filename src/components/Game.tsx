@@ -13,8 +13,11 @@ export function Game() {
 
   const { stats, recordWin, hasPlayedToday, averageMoves } = useStats();
 
-  const [showShareModal, setShowShareModal] = useState(false);
+  // If game was restored as already won, show modal immediately
+  const restoredAsWon = gameState.hasWon && gameState.moveCount > 0;
+  const [showShareModal, setShowShareModal] = useState(restoredAsWon);
   const [showHowToPlay, setShowHowToPlay] = useState(() => {
+    if (restoredAsWon) return false; // Don't show tutorial over completed game
     const seen = localStorage.getItem('gunud-tutorial-seen');
     if (!seen) {
       localStorage.setItem('gunud-tutorial-seen', 'true');
@@ -23,9 +26,9 @@ export function Game() {
     return false;
   });
   const [showStats, setShowStats] = useState(false);
-  const hasRecordedWin = useRef(false);
+  const hasRecordedWin = useRef(restoredAsWon);
 
-  // Handle win
+  // Handle win (only for fresh wins, not restored)
   useEffect(() => {
     if (gameState.hasWon && !hasRecordedWin.current) {
       if (!hasPlayedToday) {
@@ -50,7 +53,7 @@ export function Game() {
             className="text-[#6a6a8a] hover:text-[#ffd700] transition-colors"
             title="How to Play"
           >
-            <CircleHelp size={18} strokeWidth={1.5} />
+            <CircleHelp size={24} strokeWidth={1.5} />
           </button>
 
           <div className="text-center">
@@ -70,7 +73,7 @@ export function Game() {
             className="text-[#6a6a8a] hover:text-[#ffd700] transition-colors"
             title="Statistics"
           >
-            <BarChart3 size={18} strokeWidth={1.5} />
+            <BarChart3 size={24} strokeWidth={1.5} />
           </button>
         </div>
       </header>
@@ -136,7 +139,7 @@ export function Game() {
 
       {/* Modals */}
       <ShareModal
-        isOpen={showShareModal}
+        isOpen={showShareModal && gameState.hasWon}
         onClose={() => setShowShareModal(false)}
         puzzleNumber={puzzleNumber}
         moves={gameState.moveCount}

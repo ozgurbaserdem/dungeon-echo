@@ -9,6 +9,15 @@ import {
 import { generateClues } from '../utils/clueGenerator';
 
 const isDev = import.meta.env.DEV;
+const GAME_STATE_KEY = 'gunud-game-state';
+
+interface SavedGameState {
+  date: string;
+  currentRoomId: number;
+  visitedRoomIds: number[];
+  moveCount: number;
+  hasWon: boolean;
+}
 
 interface UseGameReturn {
   gameState: GameState;
@@ -22,8 +31,46 @@ interface UseGameReturn {
   regenerateDungeon: () => void;
 }
 
+function saveGameState(dateString: string, state: GameState): void {
+  try {
+    const saved: SavedGameState = {
+      date: dateString,
+      currentRoomId: state.currentRoomId,
+      visitedRoomIds: [...state.visitedRoomIds],
+      moveCount: state.moveCount,
+      hasWon: state.hasWon,
+    };
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(saved));
+  } catch { /* ignore */ }
+}
+
+function loadGameState(dateString: string): SavedGameState | null {
+  try {
+    const stored = localStorage.getItem(GAME_STATE_KEY);
+    if (!stored) return null;
+    const parsed: SavedGameState = JSON.parse(stored);
+    if (parsed.date !== dateString) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 function createInitialState(dungeon: Dungeon, dateString: string): GameState {
   const clues = generateClues(dungeon, dateString);
+
+  // Restore saved progress for today's puzzle
+  const saved = loadGameState(dateString);
+  if (saved) {
+    return {
+      dungeon,
+      currentRoomId: saved.currentRoomId,
+      visitedRoomIds: new Set(saved.visitedRoomIds),
+      moveCount: saved.moveCount,
+      hasWon: saved.hasWon,
+      clues,
+    };
+  }
 
   return {
     dungeon,
@@ -70,24 +117,25 @@ export function useGame(): UseGameReturn {
     return gameState.clues.get(gameState.currentRoomId) ?? null;
   }, [gameState.currentRoomId, gameState.clues]);
 
+  const currentRoom = useMemo(
+    () => dungeon.rooms.find((r) => r.id === gameState.currentRoomId) ?? null,
+    [dungeon.rooms, gameState.currentRoomId]
+  );
+
   const canMoveTo = useCallback(
     (roomId: number): boolean => {
       if (gameState.hasWon) return false;
-      const currentRoom = dungeon.rooms.find((r) => r.id === gameState.currentRoomId);
-      if (!currentRoom) return false;
-      return currentRoom.connections.includes(roomId);
+      return currentRoom?.connections.includes(roomId) ?? false;
     },
-    [dungeon.rooms, gameState.currentRoomId, gameState.hasWon]
+    [currentRoom, gameState.hasWon]
   );
 
   const isRoomVisible = useCallback(
     (roomId: number): boolean => {
       if (gameState.visitedRoomIds.has(roomId)) return true;
-      const currentRoom = dungeon.rooms.find((r) => r.id === gameState.currentRoomId);
-      if (!currentRoom) return false;
-      return currentRoom.connections.includes(roomId);
+      return currentRoom?.connections.includes(roomId) ?? false;
     },
-    [dungeon.rooms, gameState.currentRoomId, gameState.visitedRoomIds]
+    [currentRoom, gameState.visitedRoomIds]
   );
 
   const moveToRoom = useCallback(
@@ -96,16 +144,18 @@ export function useGame(): UseGameReturn {
       setGameState((prev) => {
         const newVisited = new Set(prev.visitedRoomIds);
         newVisited.add(roomId);
-        return {
+        const newState = {
           ...prev,
           currentRoomId: roomId,
           visitedRoomIds: newVisited,
           moveCount: prev.moveCount + 1,
           hasWon: roomId === dungeon.treasureId,
         };
+        saveGameState(dateString, newState);
+        return newState;
       });
     },
-    [canMoveTo, dungeon.treasureId]
+    [canMoveTo, dungeon.treasureId, dateString]
   );
 
   const resetGame = useCallback(() => {
