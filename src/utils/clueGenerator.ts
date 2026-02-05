@@ -110,6 +110,20 @@ export function roomMatchesClue(
   }
 }
 
+function buildSpatialClue(dx: number, dy: number, useX: boolean): Clue {
+  const icon = '\u{1F4CD}';
+
+  if (useX) {
+    if (dx > 0) return { category: 'spatial', text: 'The treasure is to the right of here', compact: '\u2192 Right', icon };
+    if (dx < 0) return { category: 'spatial', text: 'The treasure is to the left of here', compact: '\u2190 Left', icon };
+    return { category: 'spatial', text: 'The treasure is in the same column', compact: '| Same col', icon };
+  }
+
+  if (dy > 0) return { category: 'spatial', text: 'The treasure is below here', compact: '\u2193 Below', icon };
+  if (dy < 0) return { category: 'spatial', text: 'The treasure is above here', compact: '\u2191 Above', icon };
+  return { category: 'spatial', text: 'The treasure is in the same row', compact: '\u2014 Same row', icon };
+}
+
 function buildClue(
   category: ClueCategory,
   room: Room,
@@ -131,22 +145,10 @@ function buildClue(
     case 'spatial': {
       const dx = treasureRoom.x - room.x;
       const dy = treasureRoom.y - room.y;
-      const useX = random() < 0.5;
-
-      if (useX) {
-        if (dx > 0) return { category: 'spatial', text: 'The treasure is to the right of here', compact: '\u2192 Right', icon: '\u{1F4CD}' };
-        if (dx < 0) return { category: 'spatial', text: 'The treasure is to the left of here', compact: '\u2190 Left', icon: '\u{1F4CD}' };
-        return { category: 'spatial', text: 'The treasure is in the same column', compact: '| Same col', icon: '\u{1F4CD}' };
-      } else {
-        if (dy > 0) return { category: 'spatial', text: 'The treasure is below here', compact: '\u2193 Below', icon: '\u{1F4CD}' };
-        if (dy < 0) return { category: 'spatial', text: 'The treasure is above here', compact: '\u2191 Above', icon: '\u{1F4CD}' };
-        return { category: 'spatial', text: 'The treasure is in the same row', compact: '\u2014 Same row', icon: '\u{1F4CD}' };
-      }
+      return buildSpatialClue(dx, dy, random() < 0.5);
     }
     case 'manhattan': {
-      const dx = Math.abs(treasureRoom.x - room.x);
-      const dy = Math.abs(treasureRoom.y - room.y);
-      const manhattan = dx + dy;
+      const manhattan = Math.abs(treasureRoom.x - room.x) + Math.abs(treasureRoom.y - room.y);
       return {
         category: 'manhattan',
         text: `The relic is ${manhattan} square${manhattan !== 1 ? 's' : ''} away on the map`,
