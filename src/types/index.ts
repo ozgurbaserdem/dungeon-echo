@@ -20,6 +20,20 @@ export interface GameState {
   distances: Map<number, number>; // roomId -> distance to treasure
 }
 
+export interface EchoRating {
+  grade: 'S' | 'A' | 'B' | 'C' | 'D';
+  name: string;
+  emoji: string;
+}
+
+export interface RatingCounts {
+  S: number;
+  A: number;
+  B: number;
+  C: number;
+  D: number;
+}
+
 export interface Stats {
   gamesPlayed: number;
   gamesWon: number;
@@ -27,6 +41,7 @@ export interface Stats {
   maxStreak: number;
   lastPlayedDate: string | null;
   moveHistory: number[]; // moves taken to win each game
+  ratingCounts: RatingCounts;
 }
 
 export interface ShareData {

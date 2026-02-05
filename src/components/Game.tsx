@@ -30,16 +30,16 @@ export function Game() {
   useEffect(() => {
     if (gameState.hasWon && !hasRecordedWin) {
       if (!hasPlayedToday) {
-        recordWin(gameState.moveCount);
+        recordWin(gameState.moveCount, par);
       }
       setHasRecordedWin(true);
-      // Delay showing modal for dramatic effect
+      // Delay showing modal for dramatic effect (let treasure pulse play)
       const timer = setTimeout(() => {
         setShowShareModal(true);
-      }, 500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [gameState.hasWon, gameState.moveCount, hasRecordedWin, hasPlayedToday, recordWin]);
+  }, [gameState.hasWon, gameState.moveCount, hasRecordedWin, hasPlayedToday, recordWin, par]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -80,10 +80,10 @@ export function Game() {
         <div className="mt-6 text-center">
           {gameState.hasWon ? (
             <div>
-              <p className="text-2xl font-bold text-[#ffd700] mb-2">💎 Treasure Found!</p>
+              <p className="text-2xl font-bold text-[#ffd700] mb-2 win-text-reveal">💎 Treasure Found!</p>
               <button
                 onClick={() => setShowShareModal(true)}
-                className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors"
+                className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors win-button-reveal"
               >
                 Share Result
               </button>
@@ -126,6 +126,7 @@ export function Game() {
         par={par}
         visitedRoomIds={gameState.visitedRoomIds}
         dungeon={gameState.dungeon}
+        echoCount={gameState.visitedRoomIds.size}
       />
 
       <HowToPlay isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />

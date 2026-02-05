@@ -1,8 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Stats } from '../types';
+import type { Stats, RatingCounts } from '../types';
 import { getTodayDateString } from '../utils/dungeonGenerator';
+import { getEchoRating } from '../utils/sharing';
 
 const STATS_KEY = 'dungeon-echo-stats';
+
+const DEFAULT_RATING_COUNTS: RatingCounts = { S: 0, A: 0, B: 0, C: 0, D: 0 };
 
 const DEFAULT_STATS: Stats = {
   gamesPlayed: 0,
@@ -11,18 +14,24 @@ const DEFAULT_STATS: Stats = {
   maxStreak: 0,
   lastPlayedDate: null,
   moveHistory: [],
+  ratingCounts: { ...DEFAULT_RATING_COUNTS },
 };
 
 function loadStats(): Stats {
   try {
     const stored = localStorage.getItem(STATS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Migration: add ratingCounts if missing (backwards compatibility)
+      if (!parsed.ratingCounts) {
+        parsed.ratingCounts = { ...DEFAULT_RATING_COUNTS };
+      }
+      return parsed;
     }
   } catch {
     // Ignore errors
   }
-  return { ...DEFAULT_STATS };
+  return { ...DEFAULT_STATS, ratingCounts: { ...DEFAULT_RATING_COUNTS } };
 }
 
 function saveStats(stats: Stats): void {
@@ -35,7 +44,7 @@ function saveStats(stats: Stats): void {
 
 interface UseStatsReturn {
   stats: Stats;
-  recordWin: (moves: number) => void;
+  recordWin: (moves: number, par: number) => void;
   hasPlayedToday: boolean;
   averageMoves: number;
 }
@@ -52,7 +61,7 @@ export function useStats(): UseStatsReturn {
       : 0;
 
   const recordWin = useCallback(
-    (moves: number) => {
+    (moves: number, par: number) => {
       if (hasPlayedToday) return; // Already played today
 
       setStats((prev) => {
@@ -63,6 +72,13 @@ export function useStats(): UseStatsReturn {
         const isConsecutive = prev.lastPlayedDate === yesterdayString;
         const newStreak = isConsecutive ? prev.currentStreak + 1 : 1;
 
+        const rating = getEchoRating(moves, par);
+        const prevCounts = prev.ratingCounts || { S: 0, A: 0, B: 0, C: 0, D: 0 };
+        const newRatingCounts: RatingCounts = {
+          ...prevCounts,
+          [rating.grade]: (prevCounts[rating.grade] || 0) + 1,
+        };
+
         const newStats: Stats = {
           gamesPlayed: prev.gamesPlayed + 1,
           gamesWon: prev.gamesWon + 1,
@@ -70,6 +86,7 @@ export function useStats(): UseStatsReturn {
           maxStreak: Math.max(prev.maxStreak, newStreak),
           lastPlayedDate: todayString,
           moveHistory: [...prev.moveHistory.slice(-29), moves], // Keep last 30 games
+          ratingCounts: newRatingCounts,
         };
 
         saveStats(newStats);

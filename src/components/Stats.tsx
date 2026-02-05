@@ -7,8 +7,22 @@ interface StatsProps {
   averageMoves: number;
 }
 
+const GRADE_COLORS: Record<string, string> = {
+  S: 'var(--grade-s)',
+  A: 'var(--grade-a)',
+  B: 'var(--grade-b)',
+  C: 'var(--grade-c)',
+  D: 'var(--grade-d)',
+};
+
+const GRADES = ['S', 'A', 'B', 'C', 'D'] as const;
+
 export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
   if (!isOpen) return null;
+
+  const ratingCounts = stats.ratingCounts || { S: 0, A: 0, B: 0, C: 0, D: 0 };
+  const maxCount = Math.max(...GRADES.map((g) => ratingCounts[g] || 0), 1);
+  const hasAnyRatings = GRADES.some((g) => (ratingCounts[g] || 0) > 0);
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -30,6 +44,44 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
             </p>
           </div>
         )}
+
+        {/* Echo Ratings Distribution */}
+        <p className="text-[#a0a0b0] text-sm mb-2 text-center">Echo Ratings</p>
+        <div className="bg-[#1a1a2e] rounded p-4 mb-6">
+          {hasAnyRatings ? (
+            GRADES.map((grade) => {
+              const count = ratingCounts[grade] || 0;
+              return (
+                <div key={grade} className="flex items-center gap-2 mb-1">
+                  <span
+                    className="w-6 text-right font-bold"
+                    style={{ color: GRADE_COLORS[grade] }}
+                  >
+                    {grade}
+                  </span>
+                  <div className="flex-1">
+                    {count > 0 && (
+                      <div
+                        className="h-5 rounded-sm"
+                        style={{
+                          backgroundColor: GRADE_COLORS[grade],
+                          width: `${(count / maxCount) * 100}%`,
+                          minWidth: '8px',
+                        }}
+                      />
+                    )}
+                  </div>
+                  {count > 0 && (
+                    <span className="w-8 text-left text-sm text-[#a0a0b0]">{count}</span>
+                  )}
+                  {count === 0 && <span className="w-8" />}
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-[#606068] text-sm text-center">Play to see your ratings</p>
+          )}
+        </div>
 
         {stats.moveHistory.length > 0 && (
           <div className="mb-6">

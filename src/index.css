@@ -8,6 +8,11 @@
   --door-wood: #8b4513;
   --text-primary: #e8e8f0;
   --text-secondary: #a0a0b0;
+  --grade-s: #ffd700;
+  --grade-a: #f0c040;
+  --grade-b: #a8b4c0;
+  --grade-c: #8a7060;
+  --grade-d: #606068;
 }
 
 body {
@@ -46,4 +51,154 @@ body {
 
 .current-room {
   animation: pulse 2s ease-in-out infinite;
+}
+
+/* Grade reveal animation */
+@keyframes grade-reveal {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.grade-reveal {
+  animation: grade-reveal 0.5s ease-out forwards;
+}
+
+/* Shimmer (S-rank persistent glow) */
+@keyframes shimmer {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.grade-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Confetti fall (celebration particles) */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) scale(0);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120px) translateX(var(--drift, 10px)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.confetti-particle {
+  position: absolute;
+  top: 0;
+  animation: confetti-fall var(--duration, 2s) ease-out forwards;
+  animation-delay: var(--delay, 0s);
+  pointer-events: none;
+  font-size: 1.5rem;
+}
+
+/* Distance reveal (room entry) */
+@keyframes distance-reveal {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.distance-reveal {
+  animation: distance-reveal 0.3s ease-out forwards;
+}
+
+/* Treasure pulse (treasure discovery ripple) */
+@keyframes treasure-pulse {
+  0% {
+    r: 30;
+    opacity: 0.6;
+    stroke-width: 3;
+  }
+  100% {
+    r: 90;
+    opacity: 0;
+    stroke-width: 1;
+  }
+}
+
+.treasure-pulse {
+  fill: none;
+  stroke: #ffd700;
+  animation: treasure-pulse 0.8s ease-out forwards;
+}
+
+.treasure-pulse-delayed {
+  fill: none;
+  stroke: #ffd700;
+  animation: treasure-pulse 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+/* Win text reveal */
+@keyframes win-text-reveal {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.win-text-reveal {
+  opacity: 0;
+  animation: win-text-reveal 0.4s ease-out 0.6s forwards;
+}
+
+.win-button-reveal {
+  opacity: 0;
+  animation: win-text-reveal 0.4s ease-out 0.8s forwards;
+}
+
+/* Modal entrance */
+@keyframes modal-enter {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-enter {
+  animation: modal-enter 0.3s ease-out forwards;
+}
+
+/* Room hover */
+.room-hover {
+  transition: opacity 0.15s ease;
+  opacity: 0;
+}
+
+.room-hover:hover {
+  opacity: 0.4;
 }

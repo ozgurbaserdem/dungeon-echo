@@ -1,8 +1,17 @@
-import type { Dungeon } from '../types';
+import type { Dungeon, EchoRating } from '../types';
 
 export interface ShareResult {
   text: string;
   emojiGrid: string;
+}
+
+export function getEchoRating(moves: number, par: number): EchoRating {
+  const diff = moves - par;
+  if (diff < 0) return { grade: 'S', name: 'Silent Steps', emoji: '\u2728' };
+  if (diff === 0) return { grade: 'A', name: 'Sharp Echo', emoji: '\u26A1' };
+  if (diff <= 2) return { grade: 'B', name: 'Clear Echo', emoji: '\uD83D\uDD2E' };
+  if (diff <= 4) return { grade: 'C', name: 'Fading Echo', emoji: '\uD83D\uDD6F\uFE0F' };
+  return { grade: 'D', name: 'Lost Echo', emoji: '\uD83D\uDC80' };
 }
 
 // Generate share text with emoji grid
@@ -11,19 +20,19 @@ export function generateShareText(
   moves: number,
   par: number,
   visitedRoomIds: Set<number>,
-  dungeon: Dungeon
+  dungeon: Dungeon,
+  echoCount?: number
 ): ShareResult {
   const emojiGrid = generateEmojiGrid(dungeon, visitedRoomIds);
+  const rating = getEchoRating(moves, par);
+  const echoes = echoCount ?? visitedRoomIds.size;
 
-  const resultEmoji = moves <= par ? '🏆' : '🗝️';
-  const comparison =
-    moves < par ? `${par - moves} under par!` : moves === par ? 'Par!' : `${moves - par} over par`;
-
-  const text = `🏰 Dungeon Echo #${puzzleNumber}
+  const text = `Dungeon Echo #${puzzleNumber}
 
 ${emojiGrid}
 
-${resultEmoji} Found in ${moves} moves (Par: ${par}) ${comparison}
+Rating: ${rating.grade} - ${rating.name} ${rating.emoji}
+${moves} moves (Par: ${par}) | Echoes: ${echoes}
 
 dungeonecho.game`;
 
