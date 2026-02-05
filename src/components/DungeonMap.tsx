@@ -63,8 +63,8 @@ export function DungeonMap({
         width="100%"
         height="100%"
         viewBox={`0 0 ${width} ${height}`}
-        className="max-w-full max-h-[60vh]"
-        style={{ minHeight: '300px' }}
+        className="max-w-full max-h-[70vh]"
+        style={{ minHeight: '350px' }}
       >
         <g transform={`translate(${offsetX}, ${offsetY})`}>
           {/* Render doors first (behind rooms) */}
