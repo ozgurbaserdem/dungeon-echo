@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --dungeon-bg: #1a1a2e;
+  --dungeon-wall: #4a4a6a;
+  --dungeon-floor: #2d2d44;
+  --treasure-gold: #ffd700;
+  --door-wood: #8b4513;
+  --text-primary: #e8e8f0;
+  --text-secondary: #a0a0b0;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--dungeon-bg);
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+}
+
+/* Pixel art style for game elements */
+.pixel-border {
+  image-rendering: pixelated;
+  border: 2px solid var(--dungeon-wall);
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.1),
+    inset -2px -2px 0 rgba(0,0,0,0.3);
+}
+
+/* Torch flicker animation */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+  25%, 75% { opacity: 0.95; }
+}
+
+.torch-glow {
+  animation: flicker 2s ease-in-out infinite;
+}
+
+/* Room pulse when current */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+}
+
+.current-room {
+  animation: pulse 2s ease-in-out infinite;
+}
