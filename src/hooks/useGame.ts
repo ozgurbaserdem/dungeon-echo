@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { GameState, Dungeon, Clue } from '../types';
 import {
   generateDungeon,
@@ -83,11 +83,38 @@ function createInitialState(dungeon: Dungeon, dateString: string): GameState {
 }
 
 export function useGame(): UseGameReturn {
-  const dateString = getTodayDateString();
+  const [dateString, setDateString] = useState(getTodayDateString);
   const puzzleNumber = getPuzzleNumber(dateString);
 
   const [dungeon, setDungeon] = useState(() => generateDungeon(dateString));
   const [gameState, setGameState] = useState(() => createInitialState(dungeon, dateString));
+
+  // Detect date rollover (tab left open overnight)
+  useEffect(() => {
+    const checkDate = () => {
+      const today = getTodayDateString();
+      setDateString(prev => prev !== today ? today : prev);
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') checkDate();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    const interval = setInterval(checkDate, 60_000);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Regenerate dungeon when date changes (skip initial mount)
+  const lastDateRef = useRef(dateString);
+  useEffect(() => {
+    if (dateString === lastDateRef.current) return;
+    lastDateRef.current = dateString;
+    const newDungeon = generateDungeon(dateString);
+    setDungeon(newDungeon);
+    setGameState(createInitialState(newDungeon, dateString));
+  }, [dateString]);
 
   const regenerateDungeon = useCallback(() => {
     if (!isDev) return;
