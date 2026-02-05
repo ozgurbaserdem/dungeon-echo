@@ -17,27 +17,29 @@ export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
             <div>
               <p className="font-bold">Enter the Dungeon</p>
               <p className="text-sm text-[#a0a0b0]">
-                You start at the entrance. Each room shows a number.
+                You start at the entrance. Each room holds a clue about the treasure.
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <span className="text-2xl">🔢</span>
+            <span className="text-2xl">🔍</span>
             <div>
-              <p className="font-bold">Distance Hints</p>
+              <p className="font-bold">Collect Clues</p>
               <p className="text-sm text-[#a0a0b0]">
-                The number shows how many rooms away the treasure is (via the shortest path).
+                Each room reveals a property of the treasure room — its exits (🔗),
+                direction (📍), adjacency (👁), or distance from entrance (🚪).
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <span className="text-2xl">🚶</span>
+            <span className="text-2xl">🧩</span>
             <div>
-              <p className="font-bold">Navigate</p>
+              <p className="font-bold">Deduce</p>
               <p className="text-sm text-[#a0a0b0]">
-                Click on adjacent rooms or doors to move. Use the numbers to triangulate!
+                Combine clues to eliminate rooms. When only one room fits all the
+                clues — that's where the treasure is!
               </p>
             </div>
           </div>
@@ -47,7 +49,7 @@ export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
             <div>
               <p className="font-bold">Find the Treasure</p>
               <p className="text-sm text-[#a0a0b0]">
-                When you see 0, you've found it! Try to match or beat par.
+                Navigate to the room you've deduced. Fewer moves = better rating!
               </p>
             </div>
           </div>
