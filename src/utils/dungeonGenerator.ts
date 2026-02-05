@@ -36,6 +36,141 @@ export function getPuzzleNumber(dateString: string): number {
   return diffDays + 1;
 }
 
+// Count loops (cycles) in the graph using DFS
+function countLoops(rooms: Room[]): number {
+  const visited = new Set<number>();
+  const parent = new Map<number, number>();
+  let loopCount = 0;
+
+  function dfs(roomId: number, parentId: number): void {
+    visited.add(roomId);
+    parent.set(roomId, parentId);
+
+    const room = rooms.find((r) => r.id === roomId)!;
+    for (const neighborId of room.connections) {
+      if (!visited.has(neighborId)) {
+        dfs(neighborId, roomId);
+      } else if (neighborId !== parentId) {
+        loopCount++;
+      }
+    }
+  }
+
+  if (rooms.length > 0) {
+    dfs(rooms[0].id, -1);
+  }
+
+  // Each loop is counted twice (once from each direction), so divide by 2
+  return Math.floor(loopCount / 2);
+}
+
+// Ensure minimum number of loops exist by connecting rooms that share neighbors
+function ensureLoops(rooms: Room[], _random: () => number, minLoops: number): void {
+  let currentLoops = countLoops(rooms);
+
+  while (currentLoops < minLoops) {
+    // Find pairs of rooms that share a neighbor but aren't connected (creates triangle)
+    let added = false;
+
+    for (const room of rooms) {
+      if (added) break;
+
+      for (const neighborId of room.connections) {
+        if (added) break;
+        const neighbor = rooms.find((r) => r.id === neighborId)!;
+
+        // Find rooms connected to neighbor but not to current room
+        for (const candidateId of neighbor.connections) {
+          if (candidateId === room.id) continue;
+          if (room.connections.includes(candidateId)) continue;
+
+          // Connect room to candidate (creates a triangle/loop)
+          room.connections.push(candidateId);
+          const candidate = rooms.find((r) => r.id === candidateId)!;
+          candidate.connections.push(room.id);
+          added = true;
+          break;
+        }
+      }
+    }
+
+    if (!added) break; // No more loops can be added
+    currentLoops = countLoops(rooms);
+  }
+}
+
+// Add dead-end rooms that branch off the optimal path
+function addDeadEnds(
+  rooms: Room[],
+  entranceId: number,
+  treasureId: number,
+  random: () => number,
+  usedPositions: Set<string>
+): void {
+  const deadEndCount = Math.floor(random() * 3) + 3; // 3-5 dead ends
+
+  // Find rooms on or near optimal path
+  const distances = calculateDistances(rooms, entranceId);
+  const treasureDist = distances.get(treasureId) || 0;
+
+  // Get rooms that are on potential optimal paths (distance from entrance + distance to treasure = optimal)
+  const distancesToTreasure = calculateDistances(rooms, treasureId);
+  const optimalPathRooms = rooms.filter((r) => {
+    const fromEntrance = distances.get(r.id) || 0;
+    const toTreasure = distancesToTreasure.get(r.id) || 0;
+    // Room is on optimal path if distances sum to total optimal distance
+    // Also include rooms 1 step off optimal path
+    return fromEntrance + toTreasure <= treasureDist + 1;
+  });
+
+  // Prefer rooms in the middle of the path (not entrance or near treasure)
+  const middleRooms = optimalPathRooms.filter((r) => {
+    const fromEntrance = distances.get(r.id) || 0;
+    return fromEntrance >= 1 && fromEntrance < treasureDist - 1;
+  });
+
+  const candidateParents = middleRooms.length > 0 ? middleRooms : optimalPathRooms;
+
+  for (let i = 0; i < deadEndCount && candidateParents.length > 0; i++) {
+    const parentRoom = candidateParents[Math.floor(random() * candidateParents.length)];
+
+    // Find an empty adjacent grid position
+    const adjacentOffsets = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+    ];
+
+    // Shuffle offsets for variety
+    for (let j = adjacentOffsets.length - 1; j > 0; j--) {
+      const k = Math.floor(random() * (j + 1));
+      [adjacentOffsets[j], adjacentOffsets[k]] = [adjacentOffsets[k], adjacentOffsets[j]];
+    }
+
+    for (const [dx, dy] of adjacentOffsets) {
+      const newX = parentRoom.x + dx;
+      const newY = parentRoom.y + dy;
+      const posKey = `${newX},${newY}`;
+
+      if (newX >= 0 && newY >= 0 && !usedPositions.has(posKey)) {
+        // Create dead-end room
+        const newRoom: Room = {
+          id: rooms.length,
+          x: newX,
+          y: newY,
+          connections: [parentRoom.id],
+        };
+
+        rooms.push(newRoom);
+        parentRoom.connections.push(newRoom.id);
+        usedPositions.add(posKey);
+        break;
+      }
+    }
+  }
+}
+
 // Generate dungeon from date seed
 export function generateDungeon(dateString: string): Dungeon {
   const seed = dateToSeed(dateString);
@@ -93,15 +228,15 @@ export function generateDungeon(dateString: string): Dungeon {
     }
   }
 
-  // Add a few extra connections for variety (but not too many)
-  const extraConnections = Math.floor(random() * 3) + 1;
+  // Add extra connections for variety and multiple route options (3-6 connections)
+  const extraConnections = Math.floor(random() * 4) + 3;
   for (let i = 0; i < extraConnections; i++) {
     const fromId = Math.floor(random() * roomCount);
     const candidates = rooms.filter((r) => {
       if (r.id === fromId) return false;
       if (rooms[fromId].connections.includes(r.id)) return false;
       const dist = Math.abs(rooms[fromId].x - r.x) + Math.abs(rooms[fromId].y - r.y);
-      return dist <= 2; // Only connect nearby rooms
+      return dist <= 3; // Connect rooms within distance 3 for longer "shortcuts"
     });
 
     if (candidates.length > 0) {
@@ -110,6 +245,9 @@ export function generateDungeon(dateString: string): Dungeon {
       rooms[toRoom.id].connections.push(fromId);
     }
   }
+
+  // Ensure at least 2 loops exist for circular paths
+  ensureLoops(rooms, random, 2);
 
   // Entrance is room 0
   const entranceId = 0;
@@ -135,6 +273,9 @@ export function generateDungeon(dateString: string): Dungeon {
     topHalf[Math.floor(random() * topHalf.length)] ||
     sortedValidRooms[0] ||
     rooms[rooms.length - 1];
+
+  // Add dead-end branches off the optimal path for misleading wrong turns
+  addDeadEnds(rooms, entranceId, treasureRoom.id, random, usedPositions);
 
   return {
     rooms,
