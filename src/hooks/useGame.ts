@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { GameState, Dungeon } from '../types';
 import {
   generateDungeon,
@@ -7,6 +7,8 @@ import {
   getPuzzleNumber,
 } from '../utils/dungeonGenerator';
 import { calculateDistancesToTreasure } from '../utils/pathfinding';
+
+const isDev = import.meta.env.DEV;
 
 interface UseGameReturn {
   gameState: GameState;
@@ -17,6 +19,7 @@ interface UseGameReturn {
   resetGame: () => void;
   canMoveTo: (roomId: number) => boolean;
   isRoomVisible: (roomId: number) => boolean;
+  regenerateDungeon: () => void;
 }
 
 function createInitialState(dungeon: Dungeon): GameState {
@@ -36,8 +39,32 @@ export function useGame(): UseGameReturn {
   const dateString = getTodayDateString();
   const puzzleNumber = getPuzzleNumber(dateString);
 
-  const [dungeon] = useState(() => generateDungeon(dateString));
+  const [dungeon, setDungeon] = useState(() => generateDungeon(dateString));
   const [gameState, setGameState] = useState(() => createInitialState(dungeon));
+
+  // Dev mode: Shift+R to regenerate dungeon with random seed
+  const regenerateDungeon = useCallback(() => {
+    if (!isDev) return;
+    const randomSeed = `dev-${Date.now()}-${Math.random()}`;
+    const newDungeon = generateDungeon(randomSeed);
+    setDungeon(newDungeon);
+    setGameState(createInitialState(newDungeon));
+    console.log('[Dev] Regenerated dungeon with seed:', randomSeed);
+  }, []);
+
+  useEffect(() => {
+    if (!isDev) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        regenerateDungeon();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [regenerateDungeon]);
 
   const par = useMemo(() => calculatePar(dungeon), [dungeon]);
 
@@ -106,5 +133,6 @@ export function useGame(): UseGameReturn {
     resetGame,
     canMoveTo,
     isRoomVisible,
+    regenerateDungeon,
   };
 }
