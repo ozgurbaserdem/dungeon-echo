@@ -130,6 +130,14 @@ describe('generateDungeon', () => {
       expect(dungeon.treasureId).not.toBe(dungeon.entranceId);
     });
 
+    it('entrance has at least 3 connections', () => {
+      for (const seed of testSeeds) {
+        const dungeon = generateDungeon(seed);
+        const entrance = dungeon.rooms.find(r => r.id === dungeon.entranceId)!;
+        expect(entrance.connections.length).toBeGreaterThanOrEqual(3);
+      }
+    });
+
     it('generates at least 10 rooms', () => {
       const dungeon = generateDungeon('test');
       expect(dungeon.rooms.length).toBeGreaterThanOrEqual(10);

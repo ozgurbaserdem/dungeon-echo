@@ -309,6 +309,56 @@ function addDeadEnds(
   }
 }
 
+// Ensure entrance room has at least minConnections exits
+function ensureEntranceConnections(
+  rooms: Room[],
+  entranceId: number,
+  usedPositions: Set<string>,
+  minConnections: number
+): void {
+  const entrance = rooms.find(r => r.id === entranceId)!;
+
+  while (entrance.connections.length < minConnections) {
+    // Try connecting to an existing grid-adjacent room first
+    let added = false;
+    for (const room of rooms) {
+      if (room.id === entranceId) continue;
+      if (entrance.connections.includes(room.id)) continue;
+      if (!areGridAdjacent(entrance, room)) continue;
+
+      entrance.connections.push(room.id);
+      room.connections.push(entranceId);
+      added = true;
+      break;
+    }
+
+    if (added) continue;
+
+    // No existing room to connect — create a new adjacent room
+    const offsets = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+    for (const [dx, dy] of offsets) {
+      const nx = entrance.x + dx;
+      const ny = entrance.y + dy;
+      const key = `${nx},${ny}`;
+      if (!usedPositions.has(key)) {
+        const newRoom: Room = {
+          id: rooms.length,
+          x: nx,
+          y: ny,
+          connections: [entranceId],
+        };
+        rooms.push(newRoom);
+        entrance.connections.push(newRoom.id);
+        usedPositions.add(key);
+        break;
+      }
+    }
+
+    // Safety: if we couldn't add anything, break to avoid infinite loop
+    if (entrance.connections.length < minConnections) break;
+  }
+}
+
 // Generate dungeon from date seed
 export function generateDungeon(dateString: string): Dungeon {
   const seed = dateToSeed(dateString);
@@ -422,6 +472,9 @@ export function generateDungeon(dateString: string): Dungeon {
 
   // Entrance is room 0
   const entranceId = 0;
+
+  // Ensure entrance has at least 3 exits for an interesting opening
+  ensureEntranceConnections(rooms, entranceId, usedPositions, 3);
 
   // Ensure treasure distance is within 4-6 range
   ensureDistanceRange(rooms, entranceId, 4, 6);
