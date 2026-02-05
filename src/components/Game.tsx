@@ -8,8 +8,10 @@ import { HowToPlay } from './HowToPlay';
 import { Stats } from './Stats';
 
 export function Game() {
-  const { gameState, currentClue, par, puzzleNumber, moveToRoom, canMoveTo, isRoomVisible } =
-    useGame();
+  const {
+    gameState, currentClue, par, puzzleNumber, isPractice,
+    moveToRoom, canMoveTo, isRoomVisible, startPractice, tryAnother, backToDaily,
+  } = useGame();
 
   const { stats, recordWin, hasPlayedToday, averageMoves } = useStats();
 
@@ -28,20 +30,31 @@ export function Game() {
   const [showStats, setShowStats] = useState(false);
   const hasRecordedWin = useRef(restoredAsWon);
 
+  // Reset win tracking when dungeon changes (practice mode transitions)
+  const dungeonIdRef = useRef(gameState.dungeon);
+  useEffect(() => {
+    if (gameState.dungeon !== dungeonIdRef.current) {
+      dungeonIdRef.current = gameState.dungeon;
+      hasRecordedWin.current = false;
+    }
+  }, [gameState.dungeon]);
+
   // Handle win (only for fresh wins, not restored)
   useEffect(() => {
     if (gameState.hasWon && !hasRecordedWin.current) {
-      if (!hasPlayedToday) {
+      if (!isPractice && !hasPlayedToday) {
         recordWin(gameState.moveCount, par);
       }
       hasRecordedWin.current = true;
-      // Delay showing modal for dramatic effect (let treasure pulse play)
-      const timer = setTimeout(() => {
-        setShowShareModal(true);
-      }, 1000);
-      return () => clearTimeout(timer);
+      if (!isPractice) {
+        // Delay showing modal for dramatic effect (let treasure pulse play)
+        const timer = setTimeout(() => {
+          setShowShareModal(true);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [gameState.hasWon, gameState.moveCount, hasPlayedToday, recordWin, par]);
+  }, [gameState.hasWon, gameState.moveCount, hasPlayedToday, recordWin, par, isPractice]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,7 +77,7 @@ export function Game() {
               GUNUD
             </h1>
             <p className="text-[10px] text-[#6a6a8a] tracking-[0.25em] mt-0.5">
-              PUZZLE #{puzzleNumber}
+              {isPractice ? 'PRACTICE' : `PUZZLE #${puzzleNumber}`}
             </p>
           </div>
 
@@ -92,12 +105,37 @@ export function Game() {
           {gameState.hasWon ? (
             <div>
               <p className="text-2xl font-bold text-[#ffd700] mb-2 win-text-reveal">🏺 Relic Found!</p>
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors win-button-reveal"
-              >
-                Share Result
-              </button>
+              {isPractice ? (
+                <div className="flex gap-3 win-button-reveal">
+                  <button
+                    onClick={tryAnother}
+                    className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors"
+                  >
+                    Try Another
+                  </button>
+                  <button
+                    onClick={backToDaily}
+                    className="border border-[#4a4a6a] text-[#a0a0b0] px-6 py-2 rounded font-bold hover:border-[#ffd700] hover:text-[#ffd700] transition-colors"
+                  >
+                    Back to Daily
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5 win-button-reveal">
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors"
+                  >
+                    Share Result
+                  </button>
+                  <button
+                    onClick={startPractice}
+                    className="text-[#6a6a8a] text-xs hover:text-[#ffd700] transition-colors"
+                  >
+                    Practice Mode
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>

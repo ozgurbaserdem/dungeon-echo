@@ -24,11 +24,15 @@ interface UseGameReturn {
   currentClue: Clue | null;
   par: number;
   puzzleNumber: number;
+  isPractice: boolean;
   moveToRoom: (roomId: number) => void;
   resetGame: () => void;
   canMoveTo: (roomId: number) => boolean;
   isRoomVisible: (roomId: number) => boolean;
   regenerateDungeon: () => void;
+  startPractice: () => void;
+  tryAnother: () => void;
+  backToDaily: () => void;
 }
 
 function saveGameState(dateString: string, state: GameState): void {
@@ -82,12 +86,28 @@ function createInitialState(dungeon: Dungeon, dateString: string): GameState {
   };
 }
 
+function createPracticeState(dungeon: Dungeon, seed: string): GameState {
+  const clues = generateClues(dungeon, seed);
+  return {
+    dungeon,
+    currentRoomId: dungeon.entranceId,
+    visitedRoomIds: new Set([dungeon.entranceId]),
+    moveCount: 0,
+    hasWon: dungeon.entranceId === dungeon.treasureId,
+    clues,
+  };
+}
+
 export function useGame(): UseGameReturn {
   const [dateString, setDateString] = useState(getTodayDateString);
   const puzzleNumber = getPuzzleNumber(dateString);
 
   const [dungeon, setDungeon] = useState(() => generateDungeon(dateString));
   const [gameState, setGameState] = useState(() => createInitialState(dungeon, dateString));
+
+  // Practice mode
+  const [isPractice, setIsPractice] = useState(false);
+  const dailyStateRef = useRef<{ dungeon: Dungeon; gameState: GameState } | null>(null);
 
   // Detect date rollover (tab left open overnight)
   useEffect(() => {
@@ -165,6 +185,30 @@ export function useGame(): UseGameReturn {
     [currentRoom, gameState.visitedRoomIds]
   );
 
+  const startPractice = useCallback(() => {
+    dailyStateRef.current = { dungeon, gameState };
+    const seed = `practice-${Date.now()}-${Math.random()}`;
+    const newDungeon = generateDungeon(seed);
+    setDungeon(newDungeon);
+    setGameState(createPracticeState(newDungeon, seed));
+    setIsPractice(true);
+  }, [dungeon, gameState]);
+
+  const tryAnother = useCallback(() => {
+    const seed = `practice-${Date.now()}-${Math.random()}`;
+    const newDungeon = generateDungeon(seed);
+    setDungeon(newDungeon);
+    setGameState(createPracticeState(newDungeon, seed));
+  }, []);
+
+  const backToDaily = useCallback(() => {
+    if (dailyStateRef.current) {
+      setDungeon(dailyStateRef.current.dungeon);
+      setGameState(dailyStateRef.current.gameState);
+    }
+    setIsPractice(false);
+  }, []);
+
   const moveToRoom = useCallback(
     (roomId: number) => {
       if (!canMoveTo(roomId)) return;
@@ -178,11 +222,13 @@ export function useGame(): UseGameReturn {
           moveCount: prev.moveCount + 1,
           hasWon: roomId === dungeon.treasureId,
         };
-        saveGameState(dateString, newState);
+        if (!isPractice) {
+          saveGameState(dateString, newState);
+        }
         return newState;
       });
     },
-    [canMoveTo, dungeon.treasureId, dateString]
+    [canMoveTo, dungeon.treasureId, dateString, isPractice]
   );
 
   const resetGame = useCallback(() => {
@@ -194,10 +240,14 @@ export function useGame(): UseGameReturn {
     currentClue,
     par,
     puzzleNumber,
+    isPractice,
     moveToRoom,
     resetGame,
     canMoveTo,
     isRoomVisible,
     regenerateDungeon,
+    startPractice,
+    tryAnother,
+    backToDaily,
   };
 }
