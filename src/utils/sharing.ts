@@ -44,10 +44,12 @@ function generateEmojiGrid(dungeon: Dungeon, visitedRoomIds: Set<number>): strin
   const { rooms, entranceId, treasureId } = dungeon;
 
   // Find bounds
-  const minX = Math.min(...rooms.map((r) => r.x));
-  const maxX = Math.max(...rooms.map((r) => r.x));
-  const minY = Math.min(...rooms.map((r) => r.y));
-  const maxY = Math.max(...rooms.map((r) => r.y));
+  const xs = rooms.map((r) => r.x);
+  const ys = rooms.map((r) => r.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
 
   // Create grid
   const width = maxX - minX + 1;
@@ -81,20 +83,25 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // Fallback for older browsers
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      return true;
-    } catch {
-      document.body.removeChild(textarea);
-      return false;
-    }
+    return copyToClipboardFallback(text);
+  }
+}
+
+// Fallback for older browsers that don't support navigator.clipboard
+function copyToClipboardFallback(text: string): boolean {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    document.execCommand('copy');
+    return true;
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(textarea);
   }
 }
