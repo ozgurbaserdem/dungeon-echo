@@ -160,40 +160,73 @@ function isConnectedWithoutEdge(
 }
 
 // Ensure distance to farthest room is within range [minDist, maxDist]
-function ensureDistanceRange(rooms: Room[], entranceId: number, minDist: number, maxDist: number): void {
+function ensureDistanceRange(rooms: Room[], entranceId: number, minDist: number, maxDist: number, usedPositions?: Set<string>): void {
   const maxAttempts = 20;
 
-  // First, increase distance if too short (remove shortcuts)
+  // First, increase distance if too short (remove shortcuts, but protect entrance edges)
   let attempts = 0;
   while (getMaxDistance(rooms, entranceId) < minDist && attempts < maxAttempts) {
     attempts++;
 
     const distances = calculateDistances(rooms, entranceId);
-    const roomsByDistance = [...rooms].sort((a, b) => {
-      const distA = distances.get(a.id) || 0;
-      const distB = distances.get(b.id) || 0;
-      return distA - distB;
-    });
 
-    let removed = false;
-    for (const room of roomsByDistance) {
+    // Build list of removable edges, prioritizing those that act as shortcuts
+    // Skip entrance edges to preserve entrance connectivity
+    const edges: { roomId: number; neighborId: number; distDiff: number }[] = [];
+    for (const room of rooms) {
       if (room.connections.length <= 1) continue;
-
-      for (const neighborId of [...room.connections]) {
+      if (room.id === entranceId) continue;
+      for (const neighborId of room.connections) {
+        if (neighborId <= room.id) continue; // avoid duplicates
+        if (neighborId === entranceId) continue;
         const neighbor = rooms.find((r) => r.id === neighborId)!;
         if (neighbor.connections.length <= 1) continue;
-
-        if (isConnectedWithoutEdge(rooms, room.id, neighborId)) {
-          room.connections = room.connections.filter((id) => id !== neighborId);
-          neighbor.connections = neighbor.connections.filter((id) => id !== room.id);
-          removed = true;
-          break;
-        }
+        const distA = distances.get(room.id) || 0;
+        const distB = distances.get(neighbor.id) || 0;
+        edges.push({ roomId: room.id, neighborId, distDiff: Math.abs(distA - distB) });
       }
-      if (removed) break;
+    }
+    // Remove edges that skip levels first (largest distance difference = biggest shortcuts)
+    edges.sort((a, b) => b.distDiff - a.distDiff);
+
+    let removed = false;
+    for (const edge of edges) {
+      if (isConnectedWithoutEdge(rooms, edge.roomId, edge.neighborId)) {
+        const room = rooms.find((r) => r.id === edge.roomId)!;
+        const neighbor = rooms.find((r) => r.id === edge.neighborId)!;
+        room.connections = room.connections.filter((id) => id !== edge.neighborId);
+        neighbor.connections = neighbor.connections.filter((id) => id !== edge.roomId);
+        removed = true;
+        break;
+      }
     }
 
     if (!removed) break;
+  }
+
+  // If still too short, extend the graph by adding rooms at the farthest point
+  while (getMaxDistance(rooms, entranceId) < minDist && usedPositions) {
+    const distances = calculateDistances(rooms, entranceId);
+    const maxDst = Math.max(...distances.values());
+    const farthestRoom = rooms.find((r) => distances.get(r.id) === maxDst)!;
+
+    const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+    let extended = false;
+    for (const [dx, dy] of directions) {
+      const nx = farthestRoom.x + dx;
+      const ny = farthestRoom.y + dy;
+      const posKey = `${nx},${ny}`;
+      if (usedPositions.has(posKey)) continue;
+
+      const newId = rooms.length;
+      const newRoom: Room = { id: newId, x: nx, y: ny, connections: [farthestRoom.id] };
+      farthestRoom.connections.push(newId);
+      rooms.push(newRoom);
+      usedPositions.add(posKey);
+      extended = true;
+      break;
+    }
+    if (!extended) break;
   }
 
   // Then, decrease distance if too long (add shortcuts to far rooms)
@@ -358,8 +391,8 @@ export function generateDungeon(dateString: string): Dungeon {
   const seed = dateToSeed(dateString);
   const random = createSeededRandom(seed);
 
-  // Determine room count (10-14 to ensure enough distance for treasure)
-  const roomCount = Math.floor(random() * 5) + 10;
+  // Determine room count (12-16 to ensure enough distance for treasure)
+  const roomCount = Math.floor(random() * 5) + 12;
 
   // Generate rooms using growth algorithm - each new room is adjacent to existing
   // This guarantees all connections are grid-adjacent
@@ -470,17 +503,17 @@ export function generateDungeon(dateString: string): Dungeon {
   // Ensure entrance has at least 3 exits for an interesting opening
   ensureEntranceConnections(rooms, entranceId, usedPositions, 3);
 
-  // Ensure treasure distance is within 4-6 range
-  ensureDistanceRange(rooms, entranceId, 4, 6);
+  // Ensure treasure distance is within 5-7 range
+  ensureDistanceRange(rooms, entranceId, 5, 7, usedPositions);
 
-  // Find treasure room: must be at least 4 rooms away from entrance (par 4+)
+  // Find treasure room: must be at least 5 rooms away from entrance (par 5+)
   const distances = calculateDistances(rooms, entranceId);
 
-  // Filter for rooms in valid distance range (4-6 steps)
+  // Filter for rooms in valid distance range (5-7 steps)
   const validTreasureRooms = rooms.filter((r) => {
     if (r.id === entranceId) return false;
     const dist = distances.get(r.id);
-    return dist !== undefined && dist >= 4 && dist <= 6;
+    return dist !== undefined && dist >= 5 && dist <= 7;
   });
 
   // Sort valid rooms by distance (descending) - farthest first
@@ -493,7 +526,7 @@ export function generateDungeon(dateString: string): Dungeon {
   let treasureRoom: Room;
 
   if (validTreasureRooms.length > 0) {
-    // Pick randomly from valid rooms (all are in 4-6 range)
+    // Pick randomly from valid rooms (all are in 5-7 range)
     treasureRoom = validTreasureRooms[Math.floor(random() * validTreasureRooms.length)];
   } else {
     // Fallback: pick room closest to target range
@@ -501,9 +534,9 @@ export function generateDungeon(dateString: string): Dungeon {
     allOtherRooms.sort((a, b) => {
       const distA = distances.get(a.id) || 0;
       const distB = distances.get(b.id) || 0;
-      // Prefer rooms closer to the 4-6 range
-      const scoreA = distA < 4 ? 4 - distA : distA > 6 ? distA - 6 : 0;
-      const scoreB = distB < 4 ? 4 - distB : distB > 6 ? distB - 6 : 0;
+      // Prefer rooms closer to the 5-7 range
+      const scoreA = distA < 5 ? 5 - distA : distA > 7 ? distA - 7 : 0;
+      const scoreB = distB < 5 ? 5 - distB : distB > 7 ? distB - 7 : 0;
       return scoreA - scoreB;
     });
     treasureRoom = allOtherRooms[0];

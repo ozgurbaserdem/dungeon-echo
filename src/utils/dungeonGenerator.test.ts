@@ -77,13 +77,13 @@ describe('generateDungeon', () => {
     });
   });
 
-  describe('treasure distance constraints (4-6 range)', () => {
-    it.each(testSeeds)('treasure is 4-6 steps from entrance for seed %s', (seed) => {
+  describe('treasure distance constraints (5-7 range)', () => {
+    it.each(testSeeds)('treasure is 5-7 steps from entrance for seed %s', (seed) => {
       const dungeon = generateDungeon(seed);
       const par = calculatePar(dungeon);
 
-      expect(par).toBeGreaterThanOrEqual(4);
-      expect(par).toBeLessThanOrEqual(6);
+      expect(par).toBeGreaterThanOrEqual(5);
+      expect(par).toBeLessThanOrEqual(7);
     });
   });
 
