@@ -119,6 +119,7 @@ describe('generateShareText', () => {
     ],
     entranceId: 0,
     treasureId: 3,
+    dragonId: 2,
   };
 
   it('includes puzzle number in header', () => {
