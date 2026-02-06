@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Dungeon } from '../types';
-import { generateShareText, copyToClipboard, getGunudRating } from '../utils/sharing';
+import type { Dungeon } from '../../types';
+import { generateShareText, copyToClipboard, getGunudRating } from '../../utils/sharing';
+import { GRADE_COLORS } from '../gradeColors';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { GRADE_SHADOWS, CONFETTI_CONFIG, getContextMessage } from './shareModalConstants';
+import { ConfettiOverlay } from './ConfettiOverlay';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -11,47 +15,6 @@ interface ShareModalProps {
   visitedRoomIds: Set<number>;
   dungeon: Dungeon;
   clueCount: number;
-}
-
-const GRADE_COLORS: Record<string, string> = {
-  S: 'var(--grade-s)',
-  A: 'var(--grade-a)',
-  B: 'var(--grade-b)',
-  C: 'var(--grade-c)',
-  D: 'var(--grade-d)',
-};
-
-const GRADE_SHADOWS: Record<string, string> = {
-  S: '0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3)',
-  A: '0 0 15px rgba(240, 192, 64, 0.5), 0 0 30px rgba(240, 192, 64, 0.2)',
-  B: '0 0 10px rgba(168, 180, 192, 0.4)',
-};
-
-interface ConfettiConfig {
-  count: number;
-  emojis: string[];
-  duration: string;
-  maxDelay: number;
-}
-
-const CONFETTI_CONFIG: Record<string, ConfettiConfig | null> = {
-  S: { count: 12, emojis: ['\u2728'], duration: '2.5s', maxDelay: 0.8 },
-  A: { count: 8, emojis: ['\u26A1', '\u2728'], duration: '2s', maxDelay: 0.5 },
-  B: { count: 4, emojis: ['\uD83D\uDD2E'], duration: '3s', maxDelay: 0.3 },
-  C: null,
-  D: null,
-};
-
-function getContextMessage(grade: string, moves: number, par: number): string | null {
-  const diff = moves - par;
-  switch (grade) {
-    case 'S': return null;
-    case 'A': return 'Perfect navigation.';
-    case 'B': return `So close! Just ${diff} step${diff > 1 ? 's' : ''} off.`;
-    case 'C': return 'A rough descent...';
-    case 'D': return 'Lost in the dark.';
-    default: return null;
-  }
 }
 
 export function ShareModal({
@@ -94,12 +57,7 @@ export function ShareModal({
   const showConfetti = confettiPhase === 'active';
   const showShimmer = confettiPhase === 'shimmer';
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  useEscapeKey(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -122,26 +80,8 @@ export function ShareModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-sm w-full text-center pixel-border relative overflow-hidden modal-enter" onClick={e => e.stopPropagation()}>
-        {/* Tiered confetti */}
-        {showConfetti && confettiConfig && (
-          <div className="absolute inset-0 pointer-events-none">
-            {[...Array(confettiConfig.count)].map((_, i) => (
-              <div
-                key={i}
-                className="confetti-particle"
-                style={{
-                  left: `${10 + (i / confettiConfig.count) * 80}%`,
-                  '--drift': `${i % 2 === 0 ? -20 : 20}px`,
-                  '--duration': confettiConfig.duration,
-                  '--delay': `${(i / confettiConfig.count) * confettiConfig.maxDelay}s`,
-                } as React.CSSProperties}
-              >
-                {confettiConfig.emojis[i % confettiConfig.emojis.length]}
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="bg-dungeon-floor rounded-lg p-6 max-w-sm w-full text-center pixel-border relative overflow-hidden modal-enter" onClick={e => e.stopPropagation()}>
+        {showConfetti && confettiConfig && <ConfettiOverlay config={confettiConfig} />}
 
         {/* Grade Letter */}
         <div
@@ -166,18 +106,18 @@ export function ShareModal({
         {/* Stats Row */}
         <div className="flex items-center justify-center gap-6 mt-4 mb-2">
           <div className="text-center">
-            <p className="text-xs text-[#a0a0b0] uppercase">Moves</p>
+            <p className="text-xs text-text-secondary uppercase">Moves</p>
             <p className="text-2xl font-bold" style={{ color: gradeColor }}>{moves}</p>
           </div>
-          <div className="w-px h-10 bg-[#4a4a6a]" />
+          <div className="w-px h-10 bg-dungeon-wall" />
           <div className="text-center">
-            <p className="text-xs text-[#a0a0b0] uppercase">Par</p>
-            <p className="text-2xl font-bold text-[#a0a0b0]">{par}</p>
+            <p className="text-xs text-text-secondary uppercase">Par</p>
+            <p className="text-2xl font-bold text-text-secondary">{par}</p>
           </div>
-          <div className="w-px h-10 bg-[#4a4a6a]" />
+          <div className="w-px h-10 bg-dungeon-wall" />
           <div className="text-center">
-            <p className="text-xs text-[#a0a0b0] uppercase">Clues</p>
-            <p className={`text-2xl font-bold ${cluesHighlight ? 'text-[#ffd700]' : 'text-[#a0a0b0]'}`}>
+            <p className="text-xs text-text-secondary uppercase">Clues</p>
+            <p className={`text-2xl font-bold ${cluesHighlight ? 'text-treasure-gold' : 'text-text-secondary'}`}>
               {clueCount}
             </p>
           </div>
@@ -186,14 +126,14 @@ export function ShareModal({
         {/* Context Message */}
         {contextMessage && (
           <p
-            className={`text-sm italic mt-2 mb-4 ${rating.grade === 'B' ? 'text-[#c0a070]' : 'text-[#a0a0b0]'}`}
+            className={`text-sm italic mt-2 mb-4 ${rating.grade === 'B' ? 'text-text-warm' : 'text-text-secondary'}`}
           >
             {contextMessage}
           </p>
         )}
 
         {/* Emoji Grid */}
-        <div className="bg-[#1a1a2e] rounded p-4 mb-4 mt-4 font-mono text-lg leading-relaxed">
+        <div className="bg-dungeon-bg rounded p-4 mb-4 mt-4 font-mono text-lg leading-relaxed">
           <div className="whitespace-pre">{emojiGrid}</div>
         </div>
 
@@ -201,13 +141,13 @@ export function ShareModal({
         <div className="flex gap-3 justify-center">
           <button
             onClick={handleShare}
-            className="bg-[#ffd700] text-[#1a1a2e] px-6 py-2 rounded font-bold hover:bg-[#ffed4a] transition-colors"
+            className="bg-treasure-gold text-dungeon-bg px-6 py-2 rounded font-bold hover:bg-treasure-gold-light transition-colors"
           >
             {copied ? 'Copied!' : 'Share'}
           </button>
           <button
             onClick={onClose}
-            className="bg-[#4a4a6a] text-white px-6 py-2 rounded font-bold hover:bg-[#5a5a7a] transition-colors"
+            className="bg-dungeon-wall text-white px-6 py-2 rounded font-bold hover:bg-dungeon-wall-light transition-colors"
           >
             Close
           </button>

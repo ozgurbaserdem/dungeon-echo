@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
-import type { Stats as StatsType } from '../types';
+import type { Stats as StatsType } from '../../types';
+import { GRADE_COLORS } from '../gradeColors';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { StatBox } from './StatBox';
 
 interface StatsProps {
   isOpen: boolean;
@@ -8,23 +10,10 @@ interface StatsProps {
   averageMoves: number;
 }
 
-const GRADE_COLORS: Record<string, string> = {
-  S: 'var(--grade-s)',
-  A: 'var(--grade-a)',
-  B: 'var(--grade-b)',
-  C: 'var(--grade-c)',
-  D: 'var(--grade-d)',
-};
-
 const GRADES = ['S', 'A', 'B', 'C', 'D'] as const;
 
 export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  useEscapeKey(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -34,8 +23,8 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#2d2d44] rounded-lg p-6 max-w-sm w-full pixel-border" onClick={e => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold text-[#ffd700] mb-6 text-center">Statistics</h2>
+      <div className="bg-dungeon-floor rounded-lg p-6 max-w-sm w-full pixel-border" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold text-treasure-gold mb-6 text-center">Statistics</h2>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <StatBox label="Played" value={stats.gamesPlayed} />
@@ -45,17 +34,17 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
         </div>
 
         {stats.moveHistory.length > 0 && (
-          <div className="bg-[#1a1a2e] rounded p-4 mb-6">
-            <p className="text-center text-[#a0a0b0] text-sm mb-1">Average Moves</p>
-            <p className="text-center text-2xl font-bold text-[#ffd700]">
+          <div className="bg-dungeon-bg rounded p-4 mb-6">
+            <p className="text-center text-text-secondary text-sm mb-1">Average Moves</p>
+            <p className="text-center text-2xl font-bold text-treasure-gold">
               {averageMoves.toFixed(1)}
             </p>
           </div>
         )}
 
         {/* Gunud Ratings Distribution */}
-        <p className="text-[#a0a0b0] text-sm mb-2 text-center">Gunud Ratings</p>
-        <div className="bg-[#1a1a2e] rounded p-4 mb-6">
+        <p className="text-text-secondary text-sm mb-2 text-center">Gunud Ratings</p>
+        <div className="bg-dungeon-bg rounded p-4 mb-6">
           {hasAnyRatings ? (
             GRADES.map((grade) => {
               const count = ratingCounts[grade] || 0;
@@ -80,25 +69,25 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
                     )}
                   </div>
                   {count > 0 && (
-                    <span className="w-8 text-left text-sm text-[#a0a0b0]">{count}</span>
+                    <span className="w-8 text-left text-sm text-text-secondary">{count}</span>
                   )}
                   {count === 0 && <span className="w-8" />}
                 </div>
               );
             })
           ) : (
-            <p className="text-[#606068] text-sm text-center">Play to see your ratings</p>
+            <p className="text-text-faint text-sm text-center">Play to see your ratings</p>
           )}
         </div>
 
         {stats.moveHistory.length > 0 && (
           <div className="mb-6">
-            <p className="text-[#a0a0b0] text-sm mb-2 text-center">Recent Games</p>
+            <p className="text-text-secondary text-sm mb-2 text-center">Recent Games</p>
             <div className="flex gap-1 justify-center flex-wrap">
               {stats.moveHistory.slice(-10).map((moves, i) => (
                 <div
                   key={i}
-                  className="w-8 h-8 bg-[#1a1a2e] rounded flex items-center justify-center text-sm font-mono"
+                  className="w-8 h-8 bg-dungeon-bg rounded flex items-center justify-center text-sm font-mono"
                   title={`${moves} moves`}
                 >
                   {moves}
@@ -110,31 +99,11 @@ export function Stats({ isOpen, onClose, stats, averageMoves }: StatsProps) {
 
         <button
           onClick={onClose}
-          className="w-full bg-[#4a4a6a] text-white px-6 py-3 rounded font-bold hover:bg-[#5a5a7a] transition-colors"
+          className="w-full bg-dungeon-wall text-white px-6 py-3 rounded font-bold hover:bg-dungeon-wall-light transition-colors"
         >
           Close
         </button>
       </div>
-    </div>
-  );
-}
-
-function StatBox({
-  label,
-  value,
-  emoji,
-}: {
-  label: string;
-  value: number;
-  emoji?: string;
-}) {
-  return (
-    <div className="bg-[#1a1a2e] rounded p-3 text-center">
-      <p className="text-[#a0a0b0] text-xs mb-1">{label}</p>
-      <p className="text-2xl font-bold">
-        {emoji && <span className="mr-1">{emoji}</span>}
-        {value}
-      </p>
     </div>
   );
 }

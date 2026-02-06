@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { GameState } from '../types';
+import type { GameState } from '../../types';
 import { Room } from './Room';
 import { Door } from './Door';
 
