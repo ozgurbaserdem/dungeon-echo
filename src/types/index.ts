@@ -55,10 +55,3 @@ export interface Stats {
   ratingCounts: RatingCounts;
 }
 
-export interface ShareData {
-  puzzleNumber: number;
-  moves: number;
-  par: number;
-  visitedPath: number[];
-  dungeon: Dungeon;
-}
