@@ -63,8 +63,8 @@ describe('generateClues', () => {
       else if (clue.compact.includes('Left')) expect(dx).toBeLessThan(0);
       else if (clue.compact.includes('Below')) expect(dy).toBeGreaterThan(0);
       else if (clue.compact.includes('Above')) expect(dy).toBeLessThan(0);
-      else if (clue.compact.includes('Same col')) expect(dx).toBe(0);
-      else if (clue.compact.includes('Same row')) expect(dy).toBe(0);
+      else if (clue.compact.includes('Col')) expect(dx).toBe(0);
+      else if (clue.compact.includes('Row')) expect(dy).toBe(0);
     }
   });
 

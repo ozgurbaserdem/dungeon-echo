@@ -88,8 +88,8 @@ export function roomMatchesClue(
       if (clue.compact.includes('Left')) return dx < 0;
       if (clue.compact.includes('Below')) return dy > 0;
       if (clue.compact.includes('Above')) return dy < 0;
-      if (clue.compact.includes('Same col')) return dx === 0;
-      if (clue.compact.includes('Same row')) return dy === 0;
+      if (clue.compact.includes('Col')) return dx === 0;
+      if (clue.compact.includes('Row')) return dy === 0;
       return true;
     }
     case 'manhattan': {
@@ -114,12 +114,12 @@ function buildSpatialClue(dx: number, dy: number, useX: boolean): Clue {
   if (useX) {
     if (dx > 0) return { category: 'spatial', text: 'The gem is to the right of here', compact: '\u2192 Right', icon };
     if (dx < 0) return { category: 'spatial', text: 'The gem is to the left of here', compact: '\u2190 Left', icon };
-    return { category: 'spatial', text: 'The gem is in the same column', compact: '| Same col', icon };
+    return { category: 'spatial', text: 'The gem is in the same column', compact: '↕ Col', icon };
   }
 
   if (dy > 0) return { category: 'spatial', text: 'The gem is below here', compact: '\u2193 Below', icon };
   if (dy < 0) return { category: 'spatial', text: 'The gem is above here', compact: '\u2191 Above', icon };
-  return { category: 'spatial', text: 'The gem is in the same row', compact: '\u2014 Same row', icon };
+  return { category: 'spatial', text: 'The gem is in the same row', compact: '↔ Row', icon };
 }
 
 function buildClue(

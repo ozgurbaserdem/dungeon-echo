@@ -1,6 +1,6 @@
 import type { Room as RoomType, Clue } from '../types';
 
-const ARROW_CHARS = /^[←→↑↓|—]/;
+const ARROW_CHARS = /^[←→↑↓↕↔|—]/;
 
 function ClueCompact({ text, scale, fill, className }: { text: string; scale: number; fill: string; className?: string }) {
   const match = text.match(ARROW_CHARS);
