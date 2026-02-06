@@ -19,8 +19,8 @@ export function DungeonMap({
   const { dungeon, currentRoomId, visitedRoomIds, clues, hasWon, hasLost } = gameState;
   const gameOver = hasWon || hasLost;
 
-  // Calculate SVG bounds
-  const bounds = useMemo(() => {
+  // Full dungeon bounds (used for game over)
+  const fullBounds = useMemo(() => {
     const xs = dungeon.rooms.map((r) => r.x);
     const ys = dungeon.rooms.map((r) => r.y);
     return {
@@ -31,21 +31,31 @@ export function DungeonMap({
     };
   }, [dungeon.rooms]);
 
+  // Visible-only bounds (used during active gameplay)
+  const visibleBounds = useMemo(() => {
+    const visibleRooms = dungeon.rooms.filter((r) => isRoomVisible(r.id));
+    if (visibleRooms.length === 0) return fullBounds;
+    const xs = visibleRooms.map((r) => r.x);
+    const ys = visibleRooms.map((r) => r.y);
+    return {
+      minX: Math.min(...xs),
+      maxX: Math.max(...xs),
+      minY: Math.min(...ys),
+      maxY: Math.max(...ys),
+    };
+  }, [dungeon.rooms, isRoomVisible, fullBounds]);
+
+  const bounds = gameOver ? fullBounds : visibleBounds;
+
   const scale = 1;
-  const padding = 60;
-  const minGridSpan = 6;
-  const actualGridW = bounds.maxX - bounds.minX + 1;
-  const actualGridH = bounds.maxY - bounds.minY + 1;
-  const gridW = Math.max(actualGridW, minGridSpan);
-  const gridH = Math.max(actualGridH, minGridSpan);
+  const padding = 50;
+  const gridW = bounds.maxX - bounds.minX + 1;
+  const gridH = bounds.maxY - bounds.minY + 1;
   const width = gridW * 100 * scale + padding * 2;
   const height = gridH * 100 * scale + padding * 2;
 
-  // Center the dungeon within the (possibly expanded) viewBox
-  const extraX = (gridW - actualGridW) * 100 * scale / 2;
-  const extraY = (gridH - actualGridH) * 100 * scale / 2;
-  const offsetX = -bounds.minX * 100 * scale + padding + extraX;
-  const offsetY = -bounds.minY * 100 * scale + padding + extraY;
+  const offsetX = -bounds.minX * 100 * scale + padding;
+  const offsetY = -bounds.minY * 100 * scale + padding;
 
   // Generate unique door connections (avoid duplicates)
   const doors = useMemo(() => {
@@ -65,24 +75,19 @@ export function DungeonMap({
     return result;
   }, [dungeon.rooms]);
 
+  const aspectRatio = width / height;
+
   return (
-    <div className="w-full flex justify-center overflow-hidden">
+    <div className="w-full flex justify-center">
       <svg
-        width="100%"
-        height="100%"
         viewBox={`0 0 ${width} ${height}`}
-        className="max-w-full max-h-[70vh]"
-        style={{ minHeight: '350px' }}
+        className="w-full max-w-[600px]"
+        style={{ aspectRatio, maxHeight: '70vh' }}
       >
         <g transform={`translate(${offsetX}, ${offsetY})`}>
-          {/* Render doors first (behind rooms) */}
           {doors.map(({ room1Id, room2Id }) => {
             const room1 = dungeon.rooms.find((r) => r.id === room1Id)!;
             const room2 = dungeon.rooms.find((r) => r.id === room2Id)!;
-            // Only show door if:
-            // 1. Both rooms have been visited, OR
-            // 2. One end is the current room (so you can see exits from where you are)
-            // This prevents revealing dungeon structure beyond adjacent rooms
             const bothVisited = visitedRoomIds.has(room1Id) && visitedRoomIds.has(room2Id);
             const oneIsCurrent = room1Id === currentRoomId || room2Id === currentRoomId;
             const isVisible = gameOver || bothVisited || oneIsCurrent;
@@ -109,7 +114,6 @@ export function DungeonMap({
             );
           })}
 
-          {/* Render rooms */}
           {dungeon.rooms.map((room) => {
             const clue = clues.get(room.id) ?? null;
             const isCurrent = room.id === currentRoomId;
