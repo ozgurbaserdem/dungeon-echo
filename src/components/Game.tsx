@@ -49,10 +49,9 @@ export function Game() {
       hasRecordedWin.current = true;
       if (!isPractice) {
         // Delay showing modal for dramatic effect (let treasure pulse play)
-        const timer = setTimeout(() => {
+        setTimeout(() => {
           setShowShareModal(true);
-        }, 1000);
-        return () => clearTimeout(timer);
+        }, 500);
       }
     }
   }, [gameState.hasWon, gameState.moveCount, hasPlayedToday, recordWin, par, isPractice]);
@@ -160,7 +159,7 @@ export function Game() {
                   </button>
                   <button
                     onClick={startPractice}
-                    className="text-[#6a6a8a] text-xs hover:text-[#ffd700] transition-colors"
+                    className="text-[#8888a0] text-sm hover:text-[#ffd700] transition-colors"
                   >
                     Practice Mode
                   </button>
