@@ -35,11 +35,11 @@ A daily dungeon-crawling puzzle game inspired by the secret tongue of the Dwarve
 ```
 Gunud #42
 
-⬛⬛🟨⬛
-⬛🟨🟨⬛
-⬛⬛🟩⬛
+⬛🟨🚪
+🟨🟨⬛
+⬛🟨⬛
 
-Rating: A - Swift Delve ⚡
+Rating: A - Gold Strike ⚡
 4 moves (Par: 4) | Clues: 3
 
 gunud.vercel.app
