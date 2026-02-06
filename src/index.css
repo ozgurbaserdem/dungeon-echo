@@ -1,13 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-dungeon-bg: #1a1a2e;
+  --color-dungeon-floor: #2d2d44;
+  --color-dungeon-wall: #4a4a6a;
+  --color-dungeon-wall-light: #5a5a7a;
+  --color-treasure-gold: #ffd700;
+  --color-treasure-gold-light: #ffed4a;
+  --color-text-primary: #e8e8f0;
+  --color-text-secondary: #a0a0b0;
+  --color-text-muted: #6a6a8a;
+  --color-text-dim: #8888a0;
+  --color-text-faint: #606068;
+  --color-text-warm: #c0a070;
+  --color-danger: #ff4444;
+  --color-danger-light: #ff6666;
+}
+
 :root {
-  --dungeon-bg: #1a1a2e;
-  --dungeon-wall: #4a4a6a;
-  --dungeon-floor: #2d2d44;
-  --treasure-gold: #ffd700;
-  --door-wood: #8b4513;
-  --text-primary: #e8e8f0;
-  --text-secondary: #a0a0b0;
   --grade-s: #ffd700;
   --grade-a: #f0c040;
   --grade-b: #a8b4c0;
@@ -18,15 +28,15 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--dungeon-bg);
-  color: var(--text-primary);
+  background-color: var(--color-dungeon-bg);
+  color: var(--color-text-primary);
   font-family: 'Courier New', monospace;
 }
 
 /* Pixel art style for game elements */
 .pixel-border {
   image-rendering: pixelated;
-  border: 2px solid var(--dungeon-wall);
+  border: 2px solid var(--color-dungeon-wall);
   box-shadow:
     inset 2px 2px 0 rgba(255,255,255,0.1),
     inset -2px -2px 0 rgba(0,0,0,0.3);
