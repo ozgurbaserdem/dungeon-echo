@@ -12,11 +12,9 @@ export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-dungeon-floor rounded-lg p-6 max-w-md w-full pixel-border max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-treasure-gold text-center flex-1">How to Play</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary text-2xl leading-none ml-2" aria-label="Close">&times;</button>
-        </div>
+      <div className="relative bg-dungeon-floor rounded-lg p-6 max-w-md w-full pixel-border max-h-[calc(100vh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-2 right-3 text-text-secondary hover:text-text-primary text-2xl leading-none" aria-label="Close">&times;</button>
+        <h2 className="text-2xl font-bold text-treasure-gold mb-4 text-center">How to Play</h2>
 
         <div className="text-center mb-4 pb-4 border-b border-dungeon-wall/40">
           <p className="text-lg font-bold text-treasure-gold">/ˈɡunʊd/</p>
