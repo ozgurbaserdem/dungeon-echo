@@ -16,7 +16,8 @@ export function DungeonMap({
   canMoveTo,
   isRoomVisible,
 }: DungeonMapProps) {
-  const { dungeon, currentRoomId, visitedRoomIds, clues } = gameState;
+  const { dungeon, currentRoomId, visitedRoomIds, clues, hasWon, hasLost } = gameState;
+  const gameOver = hasWon || hasLost;
 
   // Calculate SVG bounds
   const bounds = useMemo(() => {
@@ -84,7 +85,7 @@ export function DungeonMap({
             // This prevents revealing dungeon structure beyond adjacent rooms
             const bothVisited = visitedRoomIds.has(room1Id) && visitedRoomIds.has(room2Id);
             const oneIsCurrent = room1Id === currentRoomId || room2Id === currentRoomId;
-            const isVisible = bothVisited || oneIsCurrent;
+            const isVisible = gameOver || bothVisited || oneIsCurrent;
             const canTraverse =
               (currentRoomId === room1Id && canMoveTo(room2Id)) ||
               (currentRoomId === room2Id && canMoveTo(room1Id));
@@ -115,6 +116,7 @@ export function DungeonMap({
             const isVisited = visitedRoomIds.has(room.id);
             const isVisible = isRoomVisible(room.id);
             const isTreasure = room.id === dungeon.treasureId;
+            const isDragon = room.id === dungeon.dragonId;
             const canClick = canMoveTo(room.id);
 
             return (
@@ -126,6 +128,8 @@ export function DungeonMap({
                 isVisited={isVisited}
                 isVisible={isVisible}
                 isTreasure={isTreasure}
+                isDragon={isDragon}
+                gameOver={gameOver}
                 onClick={() => onMoveToRoom(room.id)}
                 canClick={canClick}
                 scale={scale}

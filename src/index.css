@@ -175,6 +175,33 @@ body {
   opacity: 0;
 }
 
+/* Dragon pulse (dragon discovery ripple) */
+@keyframes dragon-pulse {
+  0% {
+    r: 30;
+    opacity: 0.6;
+    stroke-width: 3;
+  }
+  100% {
+    r: 90;
+    opacity: 0;
+    stroke-width: 1;
+  }
+}
+
+.dragon-pulse {
+  fill: none;
+  stroke: #ff4444;
+  animation: dragon-pulse 0.8s ease-out forwards;
+}
+
+.dragon-pulse-delayed {
+  fill: none;
+  stroke: #ff4444;
+  animation: dragon-pulse 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
 /* Win text reveal */
 @keyframes win-text-reveal {
   0% {

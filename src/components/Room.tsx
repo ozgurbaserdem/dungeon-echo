@@ -7,6 +7,8 @@ interface RoomProps {
   isVisited: boolean;
   isVisible: boolean;
   isTreasure: boolean;
+  isDragon: boolean;
+  gameOver: boolean;
   onClick: () => void;
   canClick: boolean;
   scale: number;
@@ -19,6 +21,8 @@ export function Room({
   isVisited,
   isVisible,
   isTreasure,
+  isDragon,
+  gameOver,
   onClick,
   canClick,
   scale,
@@ -51,9 +55,14 @@ export function Room({
     opacity = 0.5;
   }
 
-  if (isTreasure && (isVisited || isCurrent)) {
+  if (isTreasure && (isVisited || isCurrent || gameOver)) {
     fillColor = '#3d3520';
     strokeColor = '#ffd700';
+  }
+
+  if (isDragon && (isVisited || isCurrent || gameOver)) {
+    fillColor = '#3d2020';
+    strokeColor = '#ff4444';
   }
 
   return (
@@ -86,9 +95,20 @@ export function Room({
         </>
       )}
 
+      {isDragon && isCurrent && (
+        <>
+          <circle cx={0} cy={0} r={30} className="dragon-pulse" />
+          <circle cx={0} cy={0} r={30} className="dragon-pulse-delayed" />
+        </>
+      )}
+
       {isVisible && (
         <g clipPath={`url(#${clipId})`}>
-          {isTreasure && isCurrent ? (
+          {isDragon && (isVisited || isCurrent || gameOver) ? (
+            <text x={0} y={8} textAnchor="middle" fontSize={32 * scale} fill="#ff4444" className="torch-glow">
+              🐉
+            </text>
+          ) : isTreasure && (isCurrent || gameOver) ? (
             <text x={0} y={8} textAnchor="middle" fontSize={32 * scale} fill="#ffd700" className="torch-glow">
               🏺
             </text>
@@ -123,7 +143,7 @@ export function Room({
             </text>
           )}
 
-          {isCurrent && !isTreasure && (
+          {isCurrent && !isTreasure && !isDragon && (
             <text x={0} y={-22 * scale} textAnchor="middle" fontSize={10 * scale}
               fill="#ffd700" fontFamily="'Courier New', monospace">
               YOU
