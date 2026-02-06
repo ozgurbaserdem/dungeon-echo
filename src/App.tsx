@@ -1,7 +1,5 @@
 import { Game } from './components/Game';
 
-function App() {
+export function App() {
   return <Game />;
 }
-
-export default App;
